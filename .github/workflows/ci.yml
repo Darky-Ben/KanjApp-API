@@ -1,10 +1,12 @@
 name: Symfony API CI
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  schedule:
+    -   cron: '0 2 * * *'  # Tous les jours à 02:00 UTC
+#    push:
+#    branches: [ "main" ]
+#  pull_request:
+#    branches: [ "main" ]
 
 jobs:
   build:

@@ -1,0 +1,64 @@
+name: Symfony API CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-lastest
+    strategy:
+      matrix:
+        php-version: ['8.5']
+
+    steps:
+      # 1️⃣ Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2️⃣ Installer PHP
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mbstring, intl, pdo_mysql, xml, curl
+          coverage: none
+
+      # 3️⃣ Installer Composer
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      # 4️⃣ Valider le composer.json
+      - name: Composer validate
+        run: composer validate --no-check-publish
+
+      # 5️⃣ Vérifier le style de code
+      - name: PHP-CS-Fixer dry-run
+        run: ./vendor/bin/php-cs-fixer fix --dry-run --diff
+
+      # 6️⃣ Analyse statique avec PHPStan
+      - name: PHPStan analysis
+        run: ./vendor/bin/phpstan analyse -l 8 src
+
+      # 7️⃣ Lancer les tests unitaires avec PHPUnit
+      - name: Run PHPUnit
+        run: ./vendor/bin/phpunit --configuration phpunit.xml.dist --coverage-clover=coverage.xml
+
+      # 8️⃣ SonarQube scanner
+      - name: SonarQube scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          sonar-scanner \
+            -Dsonar.projectKey=kanjapp-api \
+            -Dsonar.organization=YOUR_ORG_KEY \
+            -Dsonar.sources=src \
+            -Dsonar.tests=tests \
+            -Dsonar.php.coverage.reportPaths=coverage.xml
+
+      # 9️⃣ Rector dry-run
+      - name: Rector dry-run
+        run: ./vendor/bin/rector process src --dry-run
+

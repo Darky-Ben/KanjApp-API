@@ -33,7 +33,8 @@ export function generateCsrfToken (formElement) {
     let csrfToken = csrfField.value;
 
     if (!csrfCookie && nameCheck.test(csrfToken)) {
-        csrfField.setAttribute('data-csrf-protection-cookie-value', csrfCookie = csrfToken);
+        csrfCookie = csrfToken;
+        csrfField.dataset.csrfProtectionCookieValue = csrfCookie;
         csrfField.defaultValue = csrfToken = btoa(String.fromCodePoint.apply(null, (globalThis.crypto || globalThis.msCrypto).getRandomValues(new Uint8Array(18))));
     }
     csrfField.dispatchEvent(new Event('change', { bubbles: true }));

@@ -21,18 +21,25 @@ jobs:
         uses: actions/checkout@v3
 
      # 2️⃣ Delete old artifacts
-      - name: Delete old workflow runs
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-            latest=$(gh run list --workflow "Symfony API CI" --json databaseId --jq '.[0].databaseId')
+      -   name: Delete old workflow runs
+          env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              WORKFLOW_NAME: "Symfony API CI"
+          run: |
+              echo "Fetching runs for workflow..."
+              runs=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/$(gh workflow view "$WORKFLOW_NAME" --json id --jq '.id')/runs?per_page=100 \
+                | jq -r '.workflow_runs[].id')
 
-            for run in $(gh run list --workflow "Symfony API CI" --json databaseId --jq '.[].databaseId'); do
-            if [ "$run" != "$latest" ]; then
-            echo "Deleting run $run"
-            gh run delete $run --yes
-            fi
-            done
+              latest=$(echo "$runs" | head -n1)
+
+              for run in $runs; do
+                if [ "$run" != "$latest" ]; then
+                  echo "Deleting run $run"
+                  curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
+                    https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs/$run
+                fi
+              done
 
 
 

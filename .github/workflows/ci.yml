@@ -44,7 +44,7 @@ jobs:
 
       # 7️⃣ Lancer les tests unitaires avec PHPUnit
       - name: Run PHPUnit
-        run: ./vendor/bin/phpunit --configuration phpunit.xml.dist --coverage-clover=coverage.xml
+        run: ./vendor/bin/phpunit --configuration phpunit.dist.xml --coverage-clover=coverage.xml
 
       # 8️⃣ SonarQube scanner
       - name: SonarQube scan

@@ -1,5 +1,9 @@
 name: Symfony API CI
 
+permissions:
+  actions: write
+  contents: read
+
 on:
   schedule:
     -   cron: '0 2 * * *'  # Tous les jours à 02:00 UTC
@@ -21,26 +25,22 @@ jobs:
         uses: actions/checkout@v3
 
      # 2️⃣ Delete old artifacts
-      -   name: Delete old workflow runs
-          env:
-              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              WORKFLOW_NAME: "Symfony API CI"
-          run: |
-              echo "Fetching runs for workflow..."
-              runs=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/$(gh workflow view "$WORKFLOW_NAME" --json id --jq '.id')/runs?per_page=100 \
-                | jq -r '.workflow_runs[].id')
+      - name: Delete old workflow runs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+                # Récupère les IDs de tous les runs sauf le plus récent (le run actuel)
+                # On filtre par le nom du workflow pour être précis
+                run_ids=$(gh run list --workflow "Symfony API CI" --json databaseId --jq '.[1:].[] | .databaseId')
 
-              latest=$(echo "$runs" | head -n1)
-
-              for run in $runs; do
-                if [ "$run" != "$latest" ]; then
-                  echo "Deleting run $run"
-                  curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
-                    https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs/$run
+                if [ -z "$run_ids" ]; then
+                  echo "Aucun ancien run à supprimer."
+                else
+                  for id in $run_ids; do
+                    echo "Suppression du run ID: $id"
+                    gh run delete "$id"
+                  done
                 fi
-              done
-
 
 
 # 2️⃣ Installer PHP

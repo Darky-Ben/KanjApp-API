@@ -34,7 +34,7 @@ export function generateCsrfToken (formElement) {
 
     if (!csrfCookie && nameCheck.test(csrfToken)) {
         csrfField.setAttribute('data-csrf-protection-cookie-value', csrfCookie = csrfToken);
-        csrfField.defaultValue = csrfToken = btoa(String.fromCharCode.apply(null, (window.crypto || window.msCrypto).getRandomValues(new Uint8Array(18))));
+        csrfField.defaultValue = csrfToken = btoa(String.fromCodePoint.apply(null, (window.crypto || window.msCrypto).getRandomValues(new Uint8Array(18))));
     }
     csrfField.dispatchEvent(new Event('change', { bubbles: true }));
 

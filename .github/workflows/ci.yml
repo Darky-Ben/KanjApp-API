@@ -46,19 +46,7 @@ jobs:
       - name: Run PHPUnit
         run: ./vendor/bin/phpunit --configuration phpunit.dist.xml --coverage-clover=coverage.xml
 
-      # 8️⃣ SonarQube scanner
-      - name: SonarQube scan
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          sonar-scanner \
-            -Dsonar.projectKey=kanjapp-api \
-            -Dsonar.organization=YOUR_ORG_KEY \
-            -Dsonar.sources=src \
-            -Dsonar.tests=tests \
-            -Dsonar.php.coverage.reportPaths=coverage.xml
-
-      # 9️⃣ Rector dry-run
+      # 8️⃣ Rector dry-run
       - name: Rector dry-run
         run: ./vendor/bin/rector process src --dry-run
 

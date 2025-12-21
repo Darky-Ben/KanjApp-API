@@ -30,6 +30,11 @@ jobs:
           for artifact in $artifacts; do
             gh api -X DELETE repos/${{ github.repository }}/actions/artifacts/$artifact
           done
+      - name: Clean temporary files and caches
+        run: |
+            rm -rf var/cache/*
+            rm -rf var/log/*
+            composer clear-cache
 
       # 2️⃣ Installer PHP
       - name: Setup PHP

@@ -25,16 +25,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-              latest=$(gh run list --workflow "Symfony API CI" --json databaseId --jq '.[0].databaseId')
-              for run in $(gh run list --workflow "Symfony API CI" --json databaseId --jq '.[].databaseId'); do
-                if [ "$run" != "$latest" ]; then
-                  echo "Deleting run $run"
-                  gh run delete $run --confirm
-                fi
-              done
+            latest=$(gh run list --workflow "Symfony API CI" --json databaseId --jq '.[0].databaseId')
+
+            for run in $(gh run list --workflow "Symfony API CI" --json databaseId --jq '.[].databaseId'); do
+            if [ "$run" != "$latest" ]; then
+            echo "Deleting run $run"
+            gh run delete $run --yes
+            fi
+            done
 
 
-          # 2️⃣ Installer PHP
+
+# 2️⃣ Installer PHP
       - name: Setup PHP
         uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1
         with:

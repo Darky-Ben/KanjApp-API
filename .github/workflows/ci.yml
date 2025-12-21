@@ -3,8 +3,8 @@ name: Symfony API CI
 on:
   schedule:
     -   cron: '0 2 * * *'  # Tous les jours à 02:00 UTC
-#    push:
-#    branches: [ "main" ]
+  push:
+        branches: [ "main" ]
 #  pull_request:
 #    branches: [ "main" ]
 
@@ -19,6 +19,17 @@ jobs:
       # 1️⃣ Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
+
+     # 2️⃣ Delete old artifacts
+      - name: Clean old GitHub Actions artifacts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh auth setup-git
+          artifacts=$(gh api repos/${{ github.repository }}/actions/artifacts | jq -r '.artifacts[].id')
+          for artifact in $artifacts; do
+            gh api -X DELETE repos/${{ github.repository }}/actions/artifacts/$artifact
+          done
 
       # 2️⃣ Installer PHP
       - name: Setup PHP

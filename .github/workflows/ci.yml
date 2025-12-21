@@ -7,8 +7,8 @@ permissions:
 on:
   schedule:
     - cron: '0 2 * * *'  # Tous les jours à 02:00 UTC
-  push:
-    branches: [ "main" ]
+ # push:
+ #   branches: [ "main" ]
 #  pull_request:
 #    branches: [ "main" ]
 

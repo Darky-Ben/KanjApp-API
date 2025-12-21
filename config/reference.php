@@ -186,7 +186,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         only_exceptions?: bool, // Default: false
  *         only_main_requests?: bool, // Default: false
  *         dsn?: scalar|null, // Default: "file:%kernel.cache_dir%/profiler"
- *         collect_serializer_data?: true, // Default: true
+ *         collect_serializer_data?: true, // Deprecated: Setting the "framework.profiler.collect_serializer_data.collect_serializer_data" configuration option is deprecated. It will be removed in version 9.0. // Default: true
  *     },
  *     workflows?: bool|array{
  *         enabled?: bool, // Default: false
@@ -1073,7 +1073,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *             path?: scalar|null, // Default: "/logout"
  *             target?: scalar|null, // Default: "/"
  *             invalidate_session?: bool, // Default: true
- *             clear_site_data?: list<"*"|"cache"|"cookies"|"storage"|"executionContexts">,
+ *             clear_site_data?: list<"*"|"cache"|"cookies"|"storage"|"clientHints"|"executionContexts"|"prefetchCache"|"prerenderCache">,
  *             delete_cookies?: array<string, array{ // Default: []
  *                 path?: scalar|null, // Default: null
  *                 domain?: scalar|null, // Default: null

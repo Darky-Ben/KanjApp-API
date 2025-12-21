@@ -8,10 +8,10 @@ on:
 
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        php-version: ['8.1']
+        php-version: ['8.5']
 
     steps:
       # 1️⃣ Checkout code

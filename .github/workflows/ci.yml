@@ -11,7 +11,7 @@ jobs:
     runs-on: self-hosted
     strategy:
       matrix:
-        php-version: ['8.5']
+        php-version: ['8.4']
 
     steps:
       # 1️⃣ Checkout code

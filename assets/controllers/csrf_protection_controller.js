@@ -5,14 +5,14 @@ const tokenCheck = /^[-_/+a-zA-Z0-9]{24,}$/;
 // Use `form.requestSubmit()` to ensure that the submit event is triggered. Using `form.submit()` will not trigger the event
 // and thus this event-listener will not be executed.
 document.addEventListener('submit', function (event) {
-    generateCsrfToken(event.target);
+    return generateCsrfToken(event.target);
 }, true);
 
 // When @hotwired/turbo handles form submissions, send the CSRF token in a header in addition to a cookie
 // The `framework.csrf_protection.check_header` config option needs to be enabled for the header to be checked
 document.addEventListener('turbo:submit-start', function (event) {
     const h = generateCsrfHeaders(event.detail.formSubmission.formElement);
-    Object.keys(h).map(function (k) {
+    Object.keys(h).forEach(k => {
         event.detail.formSubmission.fetchRequest.headers[k] = h[k];
     });
 });

@@ -7,8 +7,8 @@ permissions:
 on:
   schedule:
     - cron: '0 2 * * *'  # Tous les jours à 02:00 UTC
- # push:
- #   branches: [ "main" ]
+  push:
+      branches: [ "main" ]
 #  pull_request:
 #    branches: [ "main" ]
 
@@ -53,14 +53,14 @@ jobs:
 
       # 2. Scanner les dépendances (SCA)
       - name: Snyk Open Source Check
-        uses: snyk/actions/php@master
+        uses: snyk/actions/php@9359e358c5660098f993d5084918e612809d8438
         continue-on-error: true # Permet de voir le rapport même si ça échoue
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       # 3. Scanner le code (SAST)
       - name: Snyk Code Check
-        uses: snyk/actions/setup@master
+        uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
       - run: snyk code test
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}

@@ -1,8 +1,5 @@
 name: Symfony API CI
 
-permissions:
-    actions: write
-    contents: read
 
 on:
     schedule:
@@ -16,6 +13,9 @@ on:
 jobs:
     build:
         runs-on: ubuntu-latest
+        permissions:
+            actions: write
+            contents: read
         strategy:
             matrix:
                 php-version: ['8.5'] # Note: 8.5 n'est pas encore stable, vérifiez si 8.3 ou 8.4 suffit
@@ -84,17 +84,15 @@ jobs:
                 # On génère coverage.xml pour que SonarCloud le lise
               run: ./vendor/bin/phpunit --configuration phpunit.dist.xml --coverage-clover=coverage.xml --log-junit=test-report.xml
 
+            # 🔟 SonarCloud Scan
+            # On utilise l'action recommandée, mais SANS arguments car le fichier properties est lu.
+            # Elle est placée ICI pour pouvoir lire le coverage.xml généré juste au-dessus.
+            -   name: SonarQube Scan
+                uses: SonarSource/sonarqube-scan-action@v4
+                env:
+                    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
             # 1️⃣1️⃣ Rector dry-run
             - name: Rector dry-run
               run: ./vendor/bin/rector process src --dry-run
-    sonarqube:
-        name: SonarQube
-        runs-on: ubuntu-latest
-        steps:
-            -   uses: actions/checkout@v4
-                with:
-                    fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-            -   name: SonarQube Scan
-                uses: SonarSource/sonarqube-scan-action@v6
-                env:
-                    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

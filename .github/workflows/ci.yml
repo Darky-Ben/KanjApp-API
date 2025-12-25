@@ -48,7 +48,7 @@ jobs:
               with:
                   php-version: ${{ matrix.php-version }}
                   extensions: mbstring, intl, pdo_mysql, xml, curl
-                  coverage: xdebug
+                  coverage: pcov
 
             # 4️⃣ Snyk (SCA & SAST)
             - name: Snyk Open Source Check

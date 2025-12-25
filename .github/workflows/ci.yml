@@ -88,7 +88,7 @@ jobs:
             # On utilise l'action recommandée, mais SANS arguments car le fichier properties est lu.
             # Elle est placée ICI pour pouvoir lire le coverage.xml généré juste au-dessus.
             -   name: SonarQube Scan
-                uses: SonarSource/sonarqube-scan-action@v4
+                uses: SonarSource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9
                 env:
                     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

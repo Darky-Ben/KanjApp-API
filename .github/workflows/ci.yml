@@ -1,91 +1,100 @@
 name: Symfony API CI
 
 permissions:
-  actions: write
-  contents: read
+    actions: write
+    contents: read
 
 on:
-  schedule:
-    - cron: '0 2 * * *'  # Tous les jours à 02:00 UTC
-  push:
-      branches: [ "main" ]
-#  pull_request:
-#    branches: [ "main" ]
+    schedule:
+        - cron: '0 2 * * *'
+    # Pour que SonarCloud fonctionne sur les Pull Requests, il est conseillé de décommenter ceci :
+    push:
+         branches: [ "main" ]
+    # pull_request:
+    #   branches: [ "main" ]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        php-version: ['8.5']
+    build:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                php-version: ['8.5'] # Note: 8.5 n'est pas encore stable, vérifiez si 8.3 ou 8.4 suffit
 
-    steps:
-      # 1️⃣ Checkout code
-      - name: Checkout code
-        uses: actions/checkout@v3
+        steps:
+            # 1️⃣ Checkout code
+            - name: Checkout code
+              uses: actions/checkout@v3
+              with:
+                  fetch-depth: 0  # <--- MODIFICATION : Important pour l'analyse Sonar (Blame/New Code)
 
-     # 2️⃣ Delete old artifacts
-      - name: Delete old workflow runs
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-                # Récupère les IDs de tous les runs sauf le plus récent (le run actuel)
-                # On filtre par le nom du workflow pour être précis
-                run_ids=$(gh run list --workflow "Symfony API CI" --json databaseId --jq '.[1:].[] | .databaseId')
+            # 2️⃣ Delete old artifacts
+            - name: Delete old workflow runs
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  run_ids=$(gh run list --workflow "Symfony API CI" --json databaseId --jq '.[1:].[] | .databaseId')
+                  if [ -z "$run_ids" ]; then
+                    echo "Aucun ancien run à supprimer."
+                  else
+                    for id in $run_ids; do
+                      echo "Suppression du run ID: $id"
+                      gh run delete "$id"
+                    done
+                  fi
 
-                if [ -z "$run_ids" ]; then
-                  echo "Aucun ancien run à supprimer."
-                else
-                  for id in $run_ids; do
-                    echo "Suppression du run ID: $id"
-                    gh run delete "$id"
-                  done
-                fi
+            # 3️⃣ Installer PHP
+            - name: Setup PHP
+              uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1
+              with:
+                  php-version: ${{ matrix.php-version }}
+                  extensions: mbstring, intl, pdo_mysql, xml, curl
+                  coverage: xdebug
 
+            # 4️⃣ Snyk (SCA & SAST)
+            - name: Snyk Open Source Check
+              uses: snyk/actions/php@9adf32b1121593767fc3c057af55b55db032dc04
+              continue-on-error: true
+              env:
+                  SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-      # 2️⃣ Installer PHP
-      - name: Setup PHP
-        uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1
-        with:
-          php-version: ${{ matrix.php-version }}
-          extensions: mbstring, intl, pdo_mysql, xml, curl
-          coverage: xdebug
+            - name: Snyk Code Check
+              uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04
+            - run: snyk code test
+              env:
+                  SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-      # 2. Scanner les dépendances (SCA)
-      - name: Snyk Open Source Check
-        uses: snyk/actions/php@9adf32b1121593767fc3c057af55b55db032dc04
-        continue-on-error: true # Permet de voir le rapport même si ça échoue
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+            # 5️⃣ Installer Composer
+            - name: Install Composer dependencies
+              run: composer install --prefer-dist --no-progress --no-interaction
 
-      # 3. Scanner le code (SAST)
-      - name: Snyk Code Check
-        uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04
-      - run: snyk code test
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+            # 6️⃣ Valider le composer.json
+            - name: Composer validate
+              run: composer validate --no-check-publish
 
-      # 3️⃣ Installer Composer
-      - name: Install Composer dependencies
-        run: composer install --prefer-dist --no-progress --no-interaction
+            # 7️⃣ Vérifier le style de code
+            - name: PHP-CS-Fixer dry-run
+              run: ./vendor/bin/php-cs-fixer fix --dry-run --diff
 
-      # 4️⃣ Valider le composer.json
-      - name: Composer validate
-        run: composer validate --no-check-publish
+            # 8️⃣ Analyse statique avec PHPStan
+            - name: PHPStan analysis
+              run: ./vendor/bin/phpstan analyse -l 8 src
 
-      # 5️⃣ Vérifier le style de code
-      - name: PHP-CS-Fixer dry-run
-        run: ./vendor/bin/php-cs-fixer fix --dry-run --diff
+            # 9️⃣ Lancer les tests unitaires avec PHPUnit
+            - name: Run PHPUnit
+                # On génère coverage.xml pour que SonarCloud le lise
+              run: ./vendor/bin/phpunit --configuration phpunit.dist.xml --coverage-clover=coverage.xml --log-junit=test-report.xml
 
-      # 6️⃣ Analyse statique avec PHPStan
-      - name: PHPStan analysis
-        run: ./vendor/bin/phpstan analyse -l 8 src
-
-      # 7️⃣ Lancer les tests unitaires avec PHPUnit
-      - name: Run PHPUnit
-        run: ./vendor/bin/phpunit --configuration phpunit.dist.xml --coverage-clover=coverage.xml
-
-      # 8️⃣ Rector dry-run
-      - name: Rector dry-run
-        run: ./vendor/bin/rector process src --dry-run
-
+            # 1️⃣1️⃣ Rector dry-run
+            - name: Rector dry-run
+              run: ./vendor/bin/rector process src --dry-run
+    sonarqube:
+        name: SonarQube
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@v4
+                with:
+                    fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+            -   name: SonarQube Scan
+                uses: SonarSource/sonarqube-scan-action@v6
+                env:
+                    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

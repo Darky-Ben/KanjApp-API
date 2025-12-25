@@ -89,6 +89,10 @@ jobs:
             # Elle est placée ICI pour pouvoir lire le coverage.xml généré juste au-dessus.
             -   name: SonarQube Scan
                 uses: SonarSource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9
+                with:
+                    # On ajoute cet argument pour forcer l'attente du résultat
+                    args: >
+                        -Dsonar.qualitygate.wait=true
                 env:
                     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
